@@ -1,6 +1,7 @@
 'use client';
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AppContextProvider } from "@/components/AppContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased w-screen h-screen flex flex-col justify-center items-center`}
       >
-        {children}
+		<AppContextProvider>
+			{children}
+		</AppContextProvider>
       </body>
     </html>
   );
