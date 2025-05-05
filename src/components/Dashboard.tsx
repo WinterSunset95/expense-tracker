@@ -11,12 +11,18 @@ import { Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { TabsContent } from "@radix-ui/react-tabs";
 import PieChartComponent from "./PieChart";
 import { useAppContext } from "./AppContext";
+import { Button } from "./ui/button";
+import { Drawer } from "./Drawer";
+import UpdateTransaction from "./UpdateTransaction";
+import { ITransaction } from "@/lib/types";
+import { useDashboardContext } from "./DashboardContext";
 
 export default function Dashboard() {
 
 	const appContext = useAppContext();
 	const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 	const [current, setCurrent] = useState(0);
+	const { transaction } = useDashboardContext();
 
 	useEffect(() => {
 		if (!carouselApi) {
@@ -50,13 +56,14 @@ export default function Dashboard() {
 				justify-center
 				items-center
 				gap-2
-			">
+		">
+
 			<div className="
 				flex
 				flex-row
 				w-full
 				gap-2
-				">
+			">
 				<TotalBal balance={balance} />
 				<div className="flex
 					flex-col
@@ -69,7 +76,21 @@ export default function Dashboard() {
 				</div>
 			</div>
 
-			<Carousel className="w-full h-full flex-1 overflow-auto flex flex-col gap-2 lg:hidden" setApi={setCarouselApi}>
+			<Drawer>
+				<UpdateTransaction transaction={transaction} />
+			</Drawer>
+
+			<Carousel className="
+				w-full
+				h-full
+				flex-1
+				overflow-auto
+				flex
+				flex-col
+				gap-2
+				lg:hidden
+			" setApi={setCarouselApi}>
+
 				<CarouselContent className="h-full">
 					<CarouselItem className="overflow-auto">
 						<div className="w-full h-full flex-1 overflow-auto">
@@ -119,6 +140,7 @@ export default function Dashboard() {
 					</div>
 				</div>
 			</div>
+
 		</main>
 	)
 }

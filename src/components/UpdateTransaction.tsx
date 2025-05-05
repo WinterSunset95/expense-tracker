@@ -1,0 +1,157 @@
+'use client'
+import { ICategories, ICurrencies, ITransaction } from "@/lib/types";
+import { useEffect, useRef, useState } from "react";
+import { Card } from "./ui/card";
+import { Label } from "./ui/label";
+import { Input } from "./ui/input";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Button } from "./ui/button";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { Calendar } from "./ui/calendar";
+import { useAppContext } from "./AppContext";
+import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
+import { app } from "@/lib/firebase";
+import { faker } from "@faker-js/faker";
+import { useDashboardContext } from "./DashboardContext";
+
+export default function UpdateTransaction({ transaction }: { transaction?: ITransaction }) {
+	const [amount, setAmount] = useState<number>();
+	const [description, setDescription] = useState<string>();
+	const [paymentMethod, setPaymentMethod] = useState<string>();
+	const [currency, setCurrency] = useState<string>();
+	const [category, setCategory] = useState<string>();
+	const [date, setDate] = useState<Date>();
+	const { rootCategories } = useAppContext();
+
+	const transactionRef = useDashboardContext()?.transaction;
+
+	const { auth } = useAppContext();
+	const db = getFirestore(app);
+
+	if (auth.currentUser == null) return <div>Loading...</div>
+
+	const submit = () => {
+		if (auth.currentUser == null) return <div>Loading...</div>
+
+		if (!amount || !description || !currency || !category || !date) {
+			alert("Please fill all the fields!!");
+			return;
+		}
+
+		const collRef = collection(db, "tenants", auth.tenantId as string, "users", auth.currentUser.uid, "transactions");
+		let toUpload: ITransaction;
+		if (!transaction) {
+			// We generate a new transaction
+			const newDocRef = doc(collRef);
+			toUpload = {
+				transactionId: newDocRef.id,
+				amount: amount,
+				currency: currency,
+				date: date,
+				category: category,
+				description: description,
+				paymentMethod: paymentMethod ?? "Not specified",
+				isRecurring: false
+			}
+		} else {
+			// We are updating the transaction
+			toUpload = {
+				transactionId: transaction.transactionId,
+				amount: amount,
+				currency: currency,
+				date: date,
+				category: category,
+				description: description,
+				paymentMethod: paymentMethod ?? transaction.paymentMethod,
+				isRecurring: transaction.isRecurring,
+			}
+		}
+		setDoc(doc(collRef, toUpload.transactionId), toUpload)
+		.then(() => {
+			// cleanup
+			setAmount(0);
+			setDescription("");
+			setPaymentMethod("");
+			setCurrency("");
+			setCategory("");
+			setDate(new Date());
+		})
+		.catch((error) => {
+			console.log("Error writing document: ", error);
+		})
+	}
+
+	useEffect(() => {
+		if (transaction) {
+			setAmount(transaction.amount);
+			setDescription(transaction.description);
+			setPaymentMethod(transaction.paymentMethod);
+			setCurrency(transaction.currency);
+			setCategory(transaction.category);
+			setDate(transaction.date);
+		}
+	}, [transaction])
+
+	return (
+		<div className={`
+			flex
+			flex-col
+			justify-end
+			items-center
+			w-full
+			max-w-96
+		`}>
+			<Card className="w-full p-2 flex flex-col items-start gap-2 justify-center">
+				<div><Button onClick={submit}>Update</Button></div>
+				<Input className="w-full" value={amount} onChange={(e) => setAmount(parseInt(e.target.value))} type="number" placeholder="Enter the amount *" required/>
+				<Input className="w-full" value={description} onChange={(e) => setDescription(e.currentTarget.value)} type="text" placeholder="Description *" required/>
+				<Input className="w-full" value={paymentMethod} onChange={(e) => setPaymentMethod(e.currentTarget.value)} type="text" placeholder="Payment method" />
+				<Select onValueChange={setCurrency}>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Select a currency *" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							<SelectLabel> Currency </SelectLabel>
+							{Object.keys(ICurrencies).map((currency) => (
+								<SelectItem className="w-full" value={currency}>{ICurrencies[currency].name}: {currency}</SelectItem>
+							))}
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+
+				<Select onValueChange={setCategory}>
+					<SelectTrigger className="w-full">
+						<SelectValue placeholder="Select a Category" />
+					</SelectTrigger>
+					<SelectContent>
+						<SelectGroup>
+							<SelectLabel>Category</SelectLabel>
+							{Object.keys(rootCategories).map((category) => (
+								<SelectItem className="w-full" value={category}>{rootCategories[category].name}: {category}</SelectItem>
+							))}
+						</SelectGroup>
+					</SelectContent>
+				</Select>
+
+				<Popover>
+					<PopoverTrigger asChild>
+						<Button className="w-full flex flex-row justify-start items-center" variant="outline"><CalendarIcon /> {date ? format(date, "PP") : "Select a date"}</Button>
+					</PopoverTrigger>
+					<PopoverContent>
+						<Calendar
+							mode="default"
+							selected={date}
+							initialFocus
+							onDayClick={setDate}
+						/>
+					</PopoverContent>
+				</Popover>
+
+
+			</Card>
+		</div>
+	)
+}

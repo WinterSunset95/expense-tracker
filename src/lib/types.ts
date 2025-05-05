@@ -1,10 +1,11 @@
 import { Auth } from "firebase/auth";
+import { Dispatch, RefObject, SetStateAction } from "react";
 
 export interface ITransaction {
 	transactionId: string;
 	amount: number;
 	currency: string;
-	date: number;
+	date: Date;
 	category: string; // The category ID
 	description: string;
 	paymentMethod: string;
@@ -27,10 +28,125 @@ export interface ICategory {
 }
 
 export interface AppContextType {
-	auth: Auth | null;
+	auth: Auth;
 	rootCategories: Record<string, ICategory>;
 	transactions: ITransaction[];
 	income: number;
 	expense: number;
 	balance: number;
+}
+
+export interface DashboardContextType {
+	// State and setState
+	transaction: ITransaction;
+	setTransaction: Dispatch<SetStateAction<ITransaction>>;
+}
+
+export interface ICurrency {
+	symbol: string;
+	name: string;
+	shortName: string;
+	decimalDigits: number;
+	symbolFirst: boolean;
+	flagURL: string;
+}
+
+export const ICurrencies: Record<string, ICurrency> = {
+	"INR": {
+		symbol: "₹",
+		name: "Indian Rupee",
+		shortName: "INR",
+		decimalDigits: 2,
+		symbolFirst: true,
+		flagURL: "https://flagcdn.com/in.svg",
+	},
+	"PHP": {
+		symbol: "₱",
+		name: "Philippine Peso",
+		shortName: "PHP",
+		decimalDigits: 2,
+		symbolFirst: true,
+		flagURL: "https://flagcdn.com/ph.svg",
+	},
+	"USD": {
+		symbol: "$",
+		name: "US Dollar",
+		shortName: "USD",
+		decimalDigits: 2,
+		symbolFirst: true,
+		flagURL: "https://flagcdn.com/us.svg",
+	},
+	"EUR": {
+		symbol: "€",
+		name: "Euro",
+		shortName: "EUR",
+		decimalDigits: 2,
+		symbolFirst: true,
+		flagURL: "https://flagcdn.com/eu.svg",
+	},
+	"GBP": {
+		symbol: "£",
+		name: "British Pound",
+		shortName: "GBP",
+		decimalDigits: 2,
+		symbolFirst: true,
+		flagURL: "https://flagcdn.com/gb.svg",
+	},
+	"CAD": {
+		symbol: "$",
+		name: "Canadian Dollar",
+		shortName: "CAD",
+		decimalDigits: 2,
+		symbolFirst: true,
+		flagURL: "https://flagcdn.com/ca.svg",
+	},
+	"AUD": {
+		symbol: "$",
+		name: "Australian Dollar",
+		shortName: "AUD",
+		decimalDigits: 2,
+		symbolFirst: true,
+		flagURL: "https://flagcdn.com/au.svg",
+	},
+	"JPY": {
+		symbol: "¥",
+		name: "Japanese Yen",
+		shortName: "JPY",
+		decimalDigits: 0,
+		symbolFirst: false,
+		flagURL: "https://flagcdn.com/jp.svg",
+	},
+};
+
+export const ICategories: Record<string, ICategory> = {
+	"needs": {
+		categoryId: "needs",
+		name: "Needs",
+		icon: "https://picsum.photos/seed/needs/200",
+		children: {},
+	},
+	"wants": {
+		categoryId: "wants",
+		name: "Wants",
+		icon: "https://picsum.photos/seed/wants/200",
+		children: {},
+	},
+	"savings": {
+		categoryId: "savings",
+		name: "Savings",
+		icon: "https://picsum.photos/seed/savings/200",
+		children: {},
+	},
+	"uncategorized": {
+		categoryId: "uncategorized",
+		name: "Uncategorized",
+		icon: "https://picsum.photos/seed/uncategorized/200",
+		children: {},
+	},
+	"income": {
+		categoryId: "income",
+		name: "Income",
+		icon: "https://picsum.photos/seed/income/200",
+		children: {},
+	},
 }

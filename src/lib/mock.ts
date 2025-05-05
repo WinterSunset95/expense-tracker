@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { ITransaction } from "./types";
+import { ICategories, ITransaction } from "./types";
 import { collection, CollectionReference, doc, DocumentReference, getFirestore, setDoc } from "firebase/firestore";
 import { app } from "./firebase";
 import { User } from "firebase/auth";
@@ -37,7 +37,7 @@ export const mockTransactionList = (): ITransaction[] => {
 		//amount: faker.number.int({ min: -5000, max: 10000, }),
 		amount: 15000,
 		currency: "INR",
-		date: Date.now(),
+		date: new Date(),
 		category: "income",
 		description: "By Salary",
 		paymentMethod: faker.lorem.word(),
@@ -59,25 +59,6 @@ export const generateFirestoreData = (user: User) => {
 	setDoc(docRef, {
 		name: user.displayName,
 		email: user.email,
-		categories: {
-			"needs": {
-				categoryId: "needs",
-				name: "Needs",
-				icon: "https://picsum.photos/seed/1/200",
-				children: {}
-			},
-			"wants": {
-				categoryId: "wants",
-				name: "Wants",
-				icon: "https://picsum.photos/seed/2/200",
-				children: {}
-			},
-			"savings": {
-				categoryId: "savings",
-				name: "Savings",
-				icon: "https://picsum.photos/seed/3/200",
-				children: {}
-			}
-		}
+		categories: ICategories
 	});
 }

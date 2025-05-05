@@ -2,38 +2,29 @@ import { Pie, PieChart, ResponsiveContainer } from "recharts";
 import { useAppContext } from "./AppContext";
 import { ICategory, ITransaction } from "@/lib/types";
 import { useEffect, useState } from "react";
+import { TurtleIcon } from "lucide-react";
 
 export default function PieChartComponent({ transactions }: { transactions: ITransaction[] }) {
-	const appcontext = useAppContext();
-
-	if (!appcontext) {
-		return (
-			<div>Loading</div>
-		);
-	}
-
-	const rootCategory = appcontext.rootCategories;
-
-	const [data, setData] = useState([
-		{
-			name: "Groceries",
-			value: 100 
-		},
-		{
-			name: "Rent",
-			value: 100
-		}
-	]);
+	const { rootCategories, income, expense } = useAppContext();
+	const [data, setData] = useState<{ name: string, value: number }[]>([]);
 
 	const getAggregateOfCategory = (category: ICategory): number => {
+		console.log("Aggregating category: ", category.categoryId);
 		let aggregate = 0;
+		if (!category) {
+			console.log("no category");
+			return 0;
+		}
+
 		if (category.children) {
 			for (const child in category.children) {
+				console.log("Aggregating child: ", category.children[child]);
 				aggregate += getAggregateOfCategory(category.children[child]);
 			}
 		}
 
 		for (let i=0; i<transactions.length; i++) {
+			console.log("Checking between: " + transactions[i].category + " and " + category.categoryId);
 			if (transactions[i].category === category.categoryId) {
 				aggregate += transactions[i].amount > 0 ? 0 : -(transactions[i].amount);
 			}
@@ -42,34 +33,40 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 		return aggregate;
 	}
 
-	const setPieData = (category: ICategory) => {
-		let thisData = [];
-		for (const child in category.children) {
-			thisData.push({
-				name: child,
-				value: getAggregateOfCategory(category.children[child])
-			});
+	const setPieData = (category?: Record<string, ICategory>) => {
+		let thisData: { name: string, value: number }[] = [];
+
+		if (!category) {
+			setData([{
+				name: "unknown",
+				value: 100
+			}]);
+			return;
 		}
+
+		Object.keys(category).forEach((key) => {
+			thisData.push({
+				name: key,
+				value: getAggregateOfCategory(category[key])
+			});
+		});
+
 		setData(thisData);
+		console.log(thisData);
 	}
 
 	useEffect(() => {
-		const savings = getAggregateOfCategory(rootCategory["savings"]);
-		const needs = getAggregateOfCategory(rootCategory["needs"]);
-		const wants = getAggregateOfCategory(rootCategory["wants"]);
-		console.log(needs, wants, savings);
-		console.log(needs + wants + savings);
-		setPieData({
-			categoryId: "root",
-			name: "Root",
-			icon: "https://picsum.photos/seed/root/200",
-			children: {
-				"needs": rootCategory["needs"],
-				"wants": rootCategory["wants"],
-				"savings": rootCategory["savings"]
-			}
-		});
-	}, [])
+		setPieData(rootCategories);
+	}, [income, expense])
+
+	if (expense == 0) {
+		return (
+			<div className="w-full h-full flex justify-center items-center flex-col">
+				<TurtleIcon size={128} />
+				<h1 className="text-2xl md:text-4xl font-bold">Wow, such empty</h1>
+			</div>
+		)
+	}
 
 	return (
 		<ResponsiveContainer className={"w-full h-full"}>
