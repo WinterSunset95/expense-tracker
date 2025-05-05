@@ -14,7 +14,7 @@ export const mockTransaction = (): ITransaction => {
 		//amount: faker.number.int({ min: -5000, max: 10000, }),
 		amount: faker.helpers.arrayElement(spendings),
 		currency: "INR",
-		date: Date.now(),
+		date: new Date(),
 		category: faker.helpers.arrayElement(categories),
 		description: faker.lorem.word({
 			length: {

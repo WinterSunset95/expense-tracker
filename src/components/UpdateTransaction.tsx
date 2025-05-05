@@ -1,6 +1,6 @@
 'use client'
 import { ICategories, ICurrencies, ITransaction } from "@/lib/types";
-import { useEffect, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Card } from "./ui/card";
 import { Label } from "./ui/label";
 import { Input } from "./ui/input";
@@ -15,17 +15,49 @@ import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
 import { app } from "@/lib/firebase";
 import { faker } from "@faker-js/faker";
 import { useDashboardContext } from "./DashboardContext";
+import { useDrawerContext } from "./Drawer";
 
-export default function UpdateTransaction({ transaction }: { transaction?: ITransaction }) {
-	const [amount, setAmount] = useState<number>();
-	const [description, setDescription] = useState<string>();
-	const [paymentMethod, setPaymentMethod] = useState<string>();
-	const [currency, setCurrency] = useState<string>();
-	const [category, setCategory] = useState<string>();
-	const [date, setDate] = useState<Date>();
+export type UpdaterHandle = {
+	setTransaction: (transaction: ITransaction | null) => void
+	setMode: (mode: "income" | "expense" | "update") => void
+	open: () => void
+	close: () => void
+};
+
+const UpdateTransaction = forwardRef<UpdaterHandle>((props, ref) => {
+	const [transaction, setTransaction] = useState<ITransaction | null>(null);
+
+	const { open: openDrawer, close: closeDrawer, state } = useDrawerContext();
+
+	const [amount, setAmount] = useState<number>(0);
+	const [description, setDescription] = useState<string>("");
+	const [paymentMethod, setPaymentMethod] = useState<string>("");
+	const [currency, setCurrency] = useState<string>("");
+	const [category, setCategory] = useState<string>("");
+	const [date, setDate] = useState<Date>(new Date());
 	const { rootCategories } = useAppContext();
+	const [mode, setMode] = useState< "income" | "expense" | "update">(
+		transaction ? 
+			transaction.amount > 0 ?
+				"income" : transaction.amount < 0 ?
+					"expense" : "income"
+			: "update"
+	);
 
-	const transactionRef = useDashboardContext()?.transaction;
+	useImperativeHandle(ref, () => ({
+		setTransaction: (transaction: ITransaction | null) => {
+			setTransaction(transaction);
+		},
+		setMode: (mode: "income" | "expense" | "update") => {
+			setMode(mode);
+		},
+		open: () => {
+			openDrawer();
+		},
+		close: () => {
+			closeDrawer();
+		}
+	}));
 
 	const { auth } = useAppContext();
 	const db = getFirestore(app);
@@ -42,7 +74,7 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 
 		const collRef = collection(db, "tenants", auth.tenantId as string, "users", auth.currentUser.uid, "transactions");
 		let toUpload: ITransaction;
-		if (!transaction) {
+		if (!transaction || transaction.transactionId == "") {
 			// We generate a new transaction
 			const newDocRef = doc(collRef);
 			toUpload = {
@@ -68,6 +100,8 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 				isRecurring: transaction.isRecurring,
 			}
 		}
+
+		console.log(toUpload);
 		setDoc(doc(collRef, toUpload.transactionId), toUpload)
 		.then(() => {
 			// cleanup
@@ -84,6 +118,7 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 	}
 
 	useEffect(() => {
+		console.log(transaction);
 		if (transaction) {
 			setAmount(transaction.amount);
 			setDescription(transaction.description);
@@ -104,11 +139,15 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 			max-w-96
 		`}>
 			<Card className="w-full p-2 flex flex-col items-start gap-2 justify-center">
-				<div><Button onClick={submit}>Update</Button></div>
+				{
+					mode == "update" ? <Button onClick={submit}>Update</Button>
+					: mode == "income" ? <Button onClick={submit} variant="secondary">Add Income</Button>
+					: <Button onClick={submit} variant="destructive">Add Expense</Button>
+				}
 				<Input className="w-full" value={amount} onChange={(e) => setAmount(parseInt(e.target.value))} type="number" placeholder="Enter the amount *" required/>
 				<Input className="w-full" value={description} onChange={(e) => setDescription(e.currentTarget.value)} type="text" placeholder="Description *" required/>
 				<Input className="w-full" value={paymentMethod} onChange={(e) => setPaymentMethod(e.currentTarget.value)} type="text" placeholder="Payment method" />
-				<Select onValueChange={setCurrency}>
+				<Select onValueChange={setCurrency} value={currency}>
 					<SelectTrigger className="w-full">
 						<SelectValue placeholder="Select a currency *" />
 					</SelectTrigger>
@@ -116,13 +155,13 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 						<SelectGroup>
 							<SelectLabel> Currency </SelectLabel>
 							{Object.keys(ICurrencies).map((currency) => (
-								<SelectItem className="w-full" value={currency}>{ICurrencies[currency].name}: {currency}</SelectItem>
+								<SelectItem key={currency} className="w-full" value={currency}>{ICurrencies[currency].name}: {currency}</SelectItem>
 							))}
 						</SelectGroup>
 					</SelectContent>
 				</Select>
 
-				<Select onValueChange={setCategory}>
+				<Select onValueChange={setCategory} value={category}>
 					<SelectTrigger className="w-full">
 						<SelectValue placeholder="Select a Category" />
 					</SelectTrigger>
@@ -130,7 +169,7 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 						<SelectGroup>
 							<SelectLabel>Category</SelectLabel>
 							{Object.keys(rootCategories).map((category) => (
-								<SelectItem className="w-full" value={category}>{rootCategories[category].name}: {category}</SelectItem>
+								<SelectItem key={category} className="w-full" value={category}>{rootCategories[category].name}: {category}</SelectItem>
 							))}
 						</SelectGroup>
 					</SelectContent>
@@ -138,7 +177,10 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 
 				<Popover>
 					<PopoverTrigger asChild>
-						<Button className="w-full flex flex-row justify-start items-center" variant="outline"><CalendarIcon /> {date ? format(date, "PP") : "Select a date"}</Button>
+						<Button className="w-full flex flex-row justify-start items-center" variant="outline">
+							<CalendarIcon />
+							{date ? date.toLocaleDateString() : "Select a date"}
+						</Button>
 					</PopoverTrigger>
 					<PopoverContent>
 						<Calendar
@@ -149,9 +191,9 @@ export default function UpdateTransaction({ transaction }: { transaction?: ITran
 						/>
 					</PopoverContent>
 				</Popover>
-
-
 			</Card>
 		</div>
 	)
-}
+})
+
+export default UpdateTransaction

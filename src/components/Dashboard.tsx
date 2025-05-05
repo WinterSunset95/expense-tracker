@@ -22,7 +22,7 @@ export default function Dashboard() {
 	const appContext = useAppContext();
 	const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 	const [current, setCurrent] = useState(0);
-	const { transaction } = useDashboardContext();
+	const { updaterRef } = useDashboardContext();
 
 	useEffect(() => {
 		if (!carouselApi) {
@@ -75,10 +75,6 @@ export default function Dashboard() {
 					<Money amount={expense} income="no" />
 				</div>
 			</div>
-
-			<Drawer>
-				<UpdateTransaction transaction={transaction} />
-			</Drawer>
 
 			<Carousel className="
 				w-full

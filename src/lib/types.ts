@@ -1,5 +1,6 @@
+import { UpdaterHandle } from "@/components/UpdateTransaction";
 import { Auth } from "firebase/auth";
-import { Dispatch, RefObject, SetStateAction } from "react";
+import { Dispatch, Ref, RefObject, SetStateAction } from "react";
 
 export interface ITransaction {
 	transactionId: string;
@@ -24,6 +25,8 @@ export interface ICategory {
 	categoryId: string;
 	name: string;
 	icon: string;
+	color?: string;
+	maxSpend?: number;
 	children: Record<string, ICategory>;
 }
 
@@ -37,9 +40,7 @@ export interface AppContextType {
 }
 
 export interface DashboardContextType {
-	// State and setState
-	transaction: ITransaction;
-	setTransaction: Dispatch<SetStateAction<ITransaction>>;
+	updaterRef: RefObject<UpdaterHandle>;
 }
 
 export interface ICurrency {
@@ -51,6 +52,7 @@ export interface ICurrency {
 	flagURL: string;
 }
 
+// Default values
 export const ICurrencies: Record<string, ICurrency> = {
 	"INR": {
 		symbol: "₹",
@@ -118,16 +120,19 @@ export const ICurrencies: Record<string, ICurrency> = {
 	},
 };
 
+// Default values
 export const ICategories: Record<string, ICategory> = {
 	"needs": {
 		categoryId: "needs",
 		name: "Needs",
 		icon: "https://picsum.photos/seed/needs/200",
+		color: "#0010FF",
 		children: {},
 	},
 	"wants": {
 		categoryId: "wants",
 		name: "Wants",
+		color: "#FF0100",
 		icon: "https://picsum.photos/seed/wants/200",
 		children: {},
 	},
@@ -135,17 +140,13 @@ export const ICategories: Record<string, ICategory> = {
 		categoryId: "savings",
 		name: "Savings",
 		icon: "https://picsum.photos/seed/savings/200",
-		children: {},
-	},
-	"uncategorized": {
-		categoryId: "uncategorized",
-		name: "Uncategorized",
-		icon: "https://picsum.photos/seed/uncategorized/200",
+		color: "#01FF00",
 		children: {},
 	},
 	"income": {
 		categoryId: "income",
 		name: "Income",
+		color: "#00FF00",
 		icon: "https://picsum.photos/seed/income/200",
 		children: {},
 	},

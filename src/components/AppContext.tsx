@@ -172,7 +172,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 			onSnapshot(tq, (snapshot) => {
 				const transactions: ITransaction[] = [];
 				snapshot.forEach((doc) => {
-					const transaction = doc.data() as ITransaction;
+					let transaction = doc.data() as ITransaction;
+					transaction.date = new Date(transaction.date);
+					console.log(transaction.date);
 					transactions.push(transaction);
 				});
 				setTransactions(transactions);

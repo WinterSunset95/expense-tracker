@@ -29,15 +29,15 @@ export default function Home() {
 				<House className="w-6! h-6! md:w-8! md:h-8!" />
 				<h1 className="hidden md:block">Dashboard</h1>
 			</TabsTrigger>
-			<TabsTrigger value="planning" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2">
+			<TabsTrigger value="planning" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2" disabled>
 				<PieChart className="w-6! h-6! md:w-8! md:h-8!"  size={128} />
 				<h1 className="hidden md:block">Planning</h1>
 			</TabsTrigger>
-			<TabsTrigger value="savings" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2">
+			<TabsTrigger value="savings" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2" disabled>
 				<PiggyBankIcon className="w-6! h-6! md:w-8! md:h-8!"  />
 				<h1 className="hidden md:block">Savings</h1>
 			</TabsTrigger>
-			<TabsTrigger value="profile" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2">
+			<TabsTrigger value="profile" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2" disabled>
 				<User2 className="w-6! h-6! md:w-8! md:h-8!"  />
 				<h1 className="hidden md:block">Profile</h1>
 			</TabsTrigger>

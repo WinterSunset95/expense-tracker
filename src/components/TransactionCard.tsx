@@ -3,21 +3,35 @@ import { Card } from "./ui/card";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible";
 import { Avatar, AvatarImage } from "./ui/avatar";
 import { useDashboardContext } from "./DashboardContext";
-import { useDrawerContext } from "./Drawer";
 import { Button } from "./ui/button";
-import { PenOff } from "lucide-react";
+import { useAppContext } from "./AppContext";
+import { collection, deleteDoc, doc, getFirestore } from "firebase/firestore";
+import { app } from "@/lib/firebase";
 
 export default function TransactionCard({ transaction }: { transaction: ITransaction }) {
 
-	const { open } = useDrawerContext();
-	const { setTransaction } = useDashboardContext();
+	const { updaterRef } = useDashboardContext();
+	const { auth, rootCategories } = useAppContext();
+	const db = getFirestore(app);
 
 	const updateItem = () => {
-		setTransaction(transaction);
-		open();
+		updaterRef.current.setTransaction(transaction);
+		updaterRef.current.setMode("update");
+		updaterRef.current.open();
 	}
 
-	const deleteItem = () => {}
+	const deleteItem = () => {
+		if (auth.currentUser == null) return;
+		const collRef = collection(db, "tenants", auth.tenantId as string, "users", auth.currentUser.uid, "transactions");
+		const docRef = doc(collRef, transaction.transactionId);
+		deleteDoc(docRef)
+		.then(() => {
+			console.log("Transaction deleted");
+		})
+		.catch((error) => {
+			console.log(error);
+		})
+	}
 
 	return (
 		<Card className="w-full flex flex-col p-2 cursor-pointer">
@@ -34,11 +48,11 @@ export default function TransactionCard({ transaction }: { transaction: ITransac
 						<h1 className={`${transaction.amount > 0 ? "text-green-600" : "text-red-600"}`}>{transaction.amount}</h1>
 					</div>
 				</CollapsibleTrigger>
-				<CollapsibleContent className="transition">
+				<CollapsibleContent className="mt-2">
 					<div className="w-full h-full flex flex-col">
-						<h1 className="text-lg">Category:</h1>
-						<h1>{transaction.category}</h1>
-						<div>
+						<h1 className="">Category: {rootCategories[transaction.category]?.name}</h1>
+						<h2>Paid through: {transaction.paymentMethod}</h2>
+						<div className="w-full flex flex-row justify-end gap-2">
 							<Button onClick={() => updateItem()}>Edit</Button>
 							<Button onClick={() => deleteItem()} variant="destructive">Delete</Button>
 						</div>
