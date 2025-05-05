@@ -32,7 +32,7 @@ export interface ICategory {
 
 export interface AppContextType {
 	auth: Auth;
-	rootCategories: Record<string, ICategory>;
+	rootCategory: ICategory;
 	transactions: ITransaction[];
 	income: number;
 	expense: number;
@@ -127,12 +127,14 @@ export const ICategories: Record<string, ICategory> = {
 		name: "Needs",
 		icon: "https://picsum.photos/seed/needs/200",
 		color: "#0010FF",
+		maxSpend: 50,
 		children: {},
 	},
 	"wants": {
 		categoryId: "wants",
 		name: "Wants",
 		color: "#FF0100",
+		maxSpend: 30,
 		icon: "https://picsum.photos/seed/wants/200",
 		children: {},
 	},
@@ -141,6 +143,7 @@ export const ICategories: Record<string, ICategory> = {
 		name: "Savings",
 		icon: "https://picsum.photos/seed/savings/200",
 		color: "#01FF00",
+		maxSpend: 20,
 		children: {},
 	},
 	"income": {

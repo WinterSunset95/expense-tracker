@@ -9,14 +9,13 @@ import { collection, deleteDoc, doc, getFirestore } from "firebase/firestore";
 import { app } from "@/lib/firebase";
 
 export default function TransactionCard({ transaction }: { transaction: ITransaction }) {
-
 	const { updaterRef } = useDashboardContext();
-	const { auth, rootCategories } = useAppContext();
+	const { auth, rootCategory } = useAppContext();
 	const db = getFirestore(app);
 
 	const updateItem = () => {
 		updaterRef.current.setTransaction(transaction);
-		updaterRef.current.setMode("update");
+		updaterRef.current.setMode(transaction.amount > 0 ? "income-update" : "expense-update");
 		updaterRef.current.open();
 	}
 
@@ -50,7 +49,7 @@ export default function TransactionCard({ transaction }: { transaction: ITransac
 				</CollapsibleTrigger>
 				<CollapsibleContent className="mt-2">
 					<div className="w-full h-full flex flex-col">
-						<h1 className="">Category: {rootCategories[transaction.category]?.name}</h1>
+						<h1 className="">Category: {rootCategory.children[transaction.category]?.name}</h1>
 						<h2>Paid through: {transaction.paymentMethod}</h2>
 						<div className="w-full flex flex-row justify-end gap-2">
 							<Button onClick={() => updateItem()}>Edit</Button>

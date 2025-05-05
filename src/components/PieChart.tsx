@@ -4,11 +4,12 @@ import { ICategory, ITransaction } from "@/lib/types";
 import { JSXElementConstructor, ReactElement, ReactNode, useEffect, useState } from "react";
 import { TurtleIcon } from "lucide-react";
 import { CategoricalChartState } from "recharts/types/chart/types";
+import { Button } from "./ui/button";
 
 export default function PieChartComponent({ transactions }: { transactions: ITransaction[] }) {
-	const { rootCategories, income, expense } = useAppContext();
+	const { rootCategory, income, expense } = useAppContext();
 	const [data, setData] = useState<{ name: string, value: number }[]>([]);
-	const [currRootCategory, setCurrRootCategory] = useState<Record<string, ICategory>>(rootCategories);
+	const [currRoot, setCurrRoot] = useState<ICategory>(rootCategory);
 
 	const getAggregateOfCategory = (category: ICategory): number => {
 		let aggregate = 0;
@@ -32,10 +33,10 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 		return aggregate;
 	}
 
-	const setPieData = (category?: Record<string, ICategory>) => {
+	const setPieData = (root?: ICategory) => {
 		let thisData: { name: string, value: number }[] = [];
 
-		if (!category) {
+		if (!root) {
 			setData([{
 				name: "unknown",
 				value: 100
@@ -43,23 +44,36 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 			return;
 		}
 
-		Object.keys(category).forEach((key) => {
-			const aggregate = getAggregateOfCategory(category[key]);
+		const categories = root.children;
+
+		Object.keys(categories).forEach((key) => {
+			const aggregate = getAggregateOfCategory(categories[key]);
 			if (aggregate === 0) {
 				return;
 			}
 			thisData.push({
 				name: key,
-				value: getAggregateOfCategory(category[key])
+				value: getAggregateOfCategory(categories[key])
 			});
 		});
+
+		transactions.forEach((transaction) => {
+			if (transaction.category === root.categoryId) {
+				thisData.push({
+					name: transaction.description,
+					value: transaction.amount > 0 ? 0 : -(transaction.amount)
+				});
+			}
+		})
+
+		console.log(thisData);
 
 		setData(thisData);
 	}
 
 	useEffect(() => {
-		setPieData(currRootCategory);
-	}, [income, expense])
+		setPieData(currRoot);
+	}, [income, expense, currRoot])
 
 	if (expense == 0) {
 		return (
@@ -72,7 +86,17 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 
 	const handleClick = (e: any) => {
 		console.log(e);
+		const newRootCat = currRoot.children[e.name];
+		if (!newRootCat) {
+			alert("You can only expand a category!!");
+			return;
+		}
+		setCurrRoot(newRootCat);
 		console.log(data);
+	}
+
+	const handleReset = () => {
+		setCurrRoot(rootCategory);
 	}
 
 	const customizedLabel = (props: any): ReactNode | ReactElement<SVGElement, string | JSXElementConstructor<any>> => {
@@ -84,13 +108,14 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 		
 		return (
 			<text x={x} y={y} fill="white" textAnchor={x > cx ? "start" : "end"} dominantBaseline="central">
-				{`${(props.percent * 100).toFixed(0)}%`}
+				{`${props.name}: ${value}`}
 			</text>
 		)
 	}
 
 	return (
-		<ResponsiveContainer className={"w-full h-full"}>
+		<div className="w-full h-full flex justify-center items-center flex-col gap-2">
+			{currRoot.categoryId !== rootCategory.categoryId && <Button className="" onClick={handleReset}>Reset Chart</Button>}
 			<PieChart width={500} height={500} className="w-full h-full">
 				<Pie
 					onClick={handleClick}
@@ -107,7 +132,7 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 					labelLine={false}
 				>
 					{data.map((entry, index) => {
-						const color = rootCategories[entry.name].color ?? "#8884d8";
+						const color = rootCategory.children[entry.name] ? rootCategory.children[entry.name].color ?? "#8884d8" : "#8884d8";
 						return (
 							<Cell key={`cell-${index}`} fill={color} />
 						)
@@ -115,6 +140,6 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 				</Pie>
 				<Tooltip cursor={true} />
 			</PieChart>
-		</ResponsiveContainer>
+		</div>
 	)
 }
