@@ -7,7 +7,7 @@ import { PlusIcon } from "lucide-react";
 import { useDrawerContext } from "./Drawer";
 import PlanAdder from "./PlanAdder";
 import Transactions from "./Transactions";
-import { colorIsDark, generateColor } from "@/lib/helpers";
+import { colorIsDark, generateColor, getNodeFromId, getParentNode } from "@/lib/helpers";
 
 export default function Planning() {
 
@@ -16,30 +16,6 @@ export default function Planning() {
 	const [categories, setCategories] = useState<ICategory[]>([]);
 	const [transactions, setTransactions] = useState(plannedTransactions);
 	const { open, setChild } = useDrawerContext();
-
-	const getParent = (category: ICategory, currParent: ICategory): ICategory | null => {
-		for (const childKey in currParent.children) {
-			if (childKey == category.categoryId) return currParent;
-
-			const found = getParent(category, currParent.children[childKey]);
-			if (found) return found;
-		}
-
-		return null;
-	}
-
-	const getNode = (key: string, currRoot?: ICategory): ICategory | null => {
-		const root = currRoot ?? rootCategory;
-
-		for (const childKey in root.children) {
-			if (childKey == key) return root.children[childKey];
-
-			const found = getNode(key, root.children[childKey]);
-			if (found) return found;
-		}
-
-		return null;
-	}
 
 	const handleClick = (e: any) => {
 		const currCat = currRoot.children[e.name];
@@ -51,7 +27,7 @@ export default function Planning() {
 	}
 
 	const handleBack = (cat: ICategory) => {
-		setCurrRoot(getParent(cat, rootCategory) ?? rootCategory);
+		setCurrRoot(getParentNode(cat, rootCategory));
 	}
 
 	const handleAdd = () => {
@@ -82,9 +58,16 @@ export default function Planning() {
 	}, [currRoot]);
 
 	return (
-		<div className="w-full h-full flex flex-col gap-4">
-			<div className="w-full"></div>
-			<div className="w-full h-full min-h-1/3 flex flex-col justify-center items-center gap-4">
+		<div className="w-full h-full grid grid-cols-12 grid-rows-12 gap-4 overflow-auto">
+			<div className="
+				col-span-12
+				row-span-5
+				flex
+				flex-col
+				justify-center
+				items-center
+				gap-4
+			">
 				<PieChart2 rootCategory={currRoot} handleClick={handleClick} handleBack={handleBack} />
 				<div className="flex gap-2 w-full justify-center items-center flex-nowrap overflow-auto">
 					{categories.map((category) => {
@@ -118,7 +101,7 @@ export default function Planning() {
 					})}
 					{transactions.map((transaction) => {
 
-						const node = getNode(transaction.category);
+						const node = getNodeFromId(transaction.category, currRoot);
 						const nodeMaxSpend = node && node.maxSpend ? (node.maxSpend/100)*income : null;
 						const myPercentage = nodeMaxSpend ? (Math.abs(transaction.amount/nodeMaxSpend)*100).toFixed(2) : null;
 						const backgroundColor = generateColor(node?.color as string, transaction.transactionId);
@@ -155,7 +138,11 @@ export default function Planning() {
 					</Button>
 				</div>
 			</div>
-			<div className="h-full">
+			<div className="
+				col-span-12
+				row-span-7
+				flex flex-col
+			">
 				<h1 className="text-2xl font-bold">Planned Transactions</h1>
 				<Transactions transactions={plannedTransactions} />
 			</div>

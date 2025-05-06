@@ -5,10 +5,11 @@ import { JSXElementConstructor, ReactElement, ReactNode, useEffect, useState } f
 import { TurtleIcon } from "lucide-react";
 import { CategoricalChartState } from "recharts/types/chart/types";
 import { Button } from "./ui/button";
+import { generateColor, getParentNode } from "@/lib/helpers";
 
 export default function PieChartComponent({ transactions }: { transactions: ITransaction[] }) {
 	const { rootCategory, income, expense } = useAppContext();
-	const [data, setData] = useState<{ name: string, value: number }[]>([]);
+	const [data, setData] = useState<{ name: string, value: number, color: string }[]>([]);
 	const [currRoot, setCurrRoot] = useState<ICategory>(rootCategory);
 
 	const getAggregateOfCategory = (category: ICategory): number => {
@@ -34,12 +35,13 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 	}
 
 	const setPieData = (root?: ICategory) => {
-		let thisData: { name: string, value: number }[] = [];
+		let thisData: { name: string, value: number, color: string }[] = [];
 
 		if (!root) {
 			setData([{
 				name: "unknown",
-				value: 100
+				value: 100,
+				color: "#8884d8"
 			}]);
 			return;
 		}
@@ -53,7 +55,8 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 			}
 			thisData.push({
 				name: key,
-				value: getAggregateOfCategory(categories[key])
+				value: getAggregateOfCategory(categories[key]),
+				color: categories[key].color ?? "#8884d8"
 			});
 		});
 
@@ -61,7 +64,8 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 			if (transaction.category === root.categoryId) {
 				thisData.push({
 					name: transaction.description,
-					value: transaction.amount > 0 ? 0 : -(transaction.amount)
+					value: transaction.amount > 0 ? 0 : -(transaction.amount),
+					color: generateColor(root.color ?? "#8884d8", transaction.description)
 				});
 			}
 		})
@@ -95,8 +99,8 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 		console.log(data);
 	}
 
-	const handleReset = () => {
-		setCurrRoot(rootCategory);
+	const handleBack = () => {
+		setCurrRoot(getParentNode(currRoot, rootCategory));
 	}
 
 	const customizedLabel = (props: any): ReactNode | ReactElement<SVGElement, string | JSXElementConstructor<any>> => {
@@ -123,8 +127,11 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 	}
 
 	return (
-		<div className="w-full h-full flex justify-center items-center flex-col gap-2">
-			{currRoot.categoryId !== rootCategory.categoryId && <Button className="" onClick={handleReset}>Reset Chart</Button>}
+		<div className="w-full h-full flex justify-center items-center flex-col gap-2 relative">
+			<div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 flex flex-col justify-center items-center">
+				<h1 className="text-2xl">{currRoot.categoryId == "root" ? "Total" : currRoot.name}</h1>
+				<h1 className="text-4xl font-black">{getAggregateOfCategory(currRoot)}</h1>
+			</div>
 			<ResponsiveContainer width="100%" height="100%">
 				<PieChart width={500} height={500} className="w-full h-full">
 					<Pie
@@ -137,6 +144,7 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 						cx="50%"
 						cy="50%"
 						outerRadius="100%"
+						innerRadius="70%"
 						fill="#8884d8"
 						label={customizedLabel}
 						labelLine={false}
@@ -145,12 +153,30 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 						animationEasing="ease-in-out"
 					>
 						{data.map((entry, index) => {
-							const color = rootCategory.children[entry.name] ? rootCategory.children[entry.name].color ?? "#8884d8" : "#8884d8";
 							return (
-								<Cell key={`cell-${index}`} stroke="" fill={color} />
+								<Cell key={`cell-${index}`} stroke="" fill={entry.color} />
 							)
 						})}
 					</Pie>
+					<Pie
+						onClick={handleBack}
+						data={[{ name: "Back", value: 100, color: getParentNode(currRoot, rootCategory).color ?? "#8884d8" }]}
+						dataKey="value"
+						nameKey="name"
+						width="100%"
+						height="100%"
+						cx="50%"
+						cy="50%"
+						outerRadius="60%"
+						fill="#8884d8"
+						labelLine={false}
+						animationBegin={0}
+						animationDuration={500}
+						animationEasing="ease-in-out"
+					>
+						<Cell stroke="" fill={currRoot.color ?? "#8884d8"} />
+					</Pie>
+
 					<Tooltip cursor={true} />
 				</PieChart>
 			</ResponsiveContainer>

@@ -58,10 +58,13 @@ export default function PieChart2({ rootCategory, handleClick, handleBack }: { r
 
 		for (let i=0; i<plannedTransactions.length; i++) {
 			if (plannedTransactions[i].category === rootCategory.categoryId) {
+				const newCol = generateColor(rootCategory.color as string, plannedTransactions[i].transactionId);
+				console.log(rootCategory.color);
+				console.log(newCol);
 				thisData.push({
 					name: plannedTransactions[i].description,
 					value: plannedTransactions[i].amount > 0 ? 0 : -(plannedTransactions[i].amount),
-					color: generateColor(rootCategory.color as string, plannedTransactions[i].transactionId),
+					color: newCol,
 				});
 			}
 		}
@@ -70,7 +73,7 @@ export default function PieChart2({ rootCategory, handleClick, handleBack }: { r
 	}, [rootCategory]);
 
 	return (
-		<div className="w-full h-full relative text-primary-foreground">
+		<div className="w-full flex-1 relative text-primary-foreground">
 			<div className="
 				absolute
 				top-1/2

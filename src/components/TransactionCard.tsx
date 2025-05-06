@@ -2,7 +2,6 @@ import { ITransaction } from "@/lib/types";
 import { Card } from "./ui/card";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "./ui/collapsible";
 import { Avatar, AvatarImage } from "./ui/avatar";
-import { useDashboardContext } from "./DashboardContext";
 import { Button } from "./ui/button";
 import { useAppContext } from "./AppContext";
 import { collection, deleteDoc, doc, getFirestore } from "firebase/firestore";

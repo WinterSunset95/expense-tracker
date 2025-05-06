@@ -15,7 +15,6 @@ import { Button } from "./ui/button";
 import { Drawer } from "./Drawer";
 import UpdateTransaction from "./UpdateTransaction";
 import { ITransaction } from "@/lib/types";
-import { useDashboardContext } from "./DashboardContext";
 
 export default function Dashboard() {
 
