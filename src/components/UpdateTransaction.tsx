@@ -1,6 +1,6 @@
 'use client'
-import { ICategories, ICurrencies, ITransaction } from "@/lib/types";
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
+import { ICategories, ICurrencies, ITransaction, TransactionUpdateMode } from "@/lib/types";
+import { FC, forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Card } from "./ui/card";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "./ui/select";
@@ -13,44 +13,23 @@ import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
 import { app } from "@/lib/firebase";
 import { useDrawerContext } from "./Drawer";
 
-export type UpdaterHandle = {
-	setTransaction: (transaction: ITransaction | null) => void
-	setMode: (mode: "income" | "expense" | "expense-update" | "income-update") => void
-	open: () => void
-	close: () => void
-};
+export type UpdateTransactionProps = {
+	transaction?: ITransaction
+	mode: TransactionUpdateMode
+}
 
-// This component exposes an api of type UpdaterHandle
-const UpdateTransaction = forwardRef<UpdaterHandle>((props, ref) => {
-	const [transaction, setTransaction] = useState<ITransaction | null>(null);
+const UpdateTransaction: FC<UpdateTransactionProps> = ({ transaction, mode }) => {
 
-	const { open: openDrawer, close: closeDrawer } = useDrawerContext();
-
-	const [amount, setAmount] = useState<number>(0);
-	const [description, setDescription] = useState<string>("");
-	const [paymentMethod, setPaymentMethod] = useState<string>("");
-	const [currency, setCurrency] = useState<string>("");
-	const [category, setCategory] = useState<string>("");
+	const [amount, setAmount] = useState<number>();
+	const [description, setDescription] = useState<string>();
+	const [paymentMethod, setPaymentMethod] = useState<string>();
+	const [currency, setCurrency] = useState<string>();
+	const [category, setCategory] = useState<string>();
 	const [date, setDate] = useState<Date>(new Date());
 	const { rootCategory } = useAppContext();
-	const [mode, setMode] = useState< "income" | "expense" | "expense-update" | "income-update" >("expense");
-
-	useImperativeHandle(ref, () => ({
-		setTransaction: (transaction: ITransaction | null) => {
-			setTransaction(transaction);
-		},
-		setMode: (mode: "income" | "expense" | "expense-update" | "income-update" ) => {
-			setMode(mode);
-		},
-		open: () => {
-			openDrawer();
-		},
-		close: () => {
-			closeDrawer();
-		}
-	}));
 
 	const { auth } = useAppContext();
+	const { close } = useDrawerContext();
 	const db = getFirestore(app);
 
 	if (auth.currentUser == null) return <div>Loading...</div>
@@ -63,7 +42,7 @@ const UpdateTransaction = forwardRef<UpdaterHandle>((props, ref) => {
 			return;
 		}
 
-		const collRef = collection(db, "tenants", auth.tenantId as string, "users", auth.currentUser.uid, "transactions");
+		const collRef = collection(db, "tenants", auth.tenantId as string, "users", auth.currentUser.uid, `${mode.includes("planned") ? "plannedTransactions" : "transactions"}`);
 		let toUpload: ITransaction;
 		if (!transaction || transaction.transactionId == "") {
 			// We generate a new transaction
@@ -94,13 +73,18 @@ const UpdateTransaction = forwardRef<UpdaterHandle>((props, ref) => {
 
 		setDoc(doc(collRef, toUpload.transactionId), toUpload)
 		.then(() => {
-			// cleanup
-			setAmount(0);
+			setAmount(undefined);
 			setDescription("");
 			setPaymentMethod("");
 			setCurrency("");
 			setCategory("");
 			setDate(new Date());
+			if (!transaction || transaction.transactionId == "") {
+				alert("Transaction added");
+			} else {
+				alert("Transaction updated");
+			}
+			close();
 		})
 		.catch((error) => {
 			console.log("Error writing document: ", error);
@@ -109,13 +93,20 @@ const UpdateTransaction = forwardRef<UpdaterHandle>((props, ref) => {
 
 	useEffect(() => {
 		console.log(transaction);
-		if (transaction) {
+		if (transaction != undefined) {
 			setAmount(transaction.amount > 0 ? transaction.amount : -transaction.amount);
 			setDescription(transaction.description);
 			setPaymentMethod(transaction.paymentMethod);
 			setCurrency(transaction.currency);
 			setCategory(transaction.category);
 			setDate(transaction.date);
+		} else {
+			setAmount(undefined);
+			setDescription("");
+			setPaymentMethod("");
+			setCurrency("");
+			setCategory("");
+			setDate(new Date());
 		}
 	}, [transaction])
 
@@ -134,7 +125,7 @@ const UpdateTransaction = forwardRef<UpdaterHandle>((props, ref) => {
 					: mode == "income" ? <Button onClick={submit} variant="secondary">Add Income</Button>
 					: <Button onClick={submit} variant="destructive">Add Expense</Button>
 				}
-				<Input className="w-full" min={0} value={amount} onChange={(e) => setAmount(parseInt(e.target.value))} type="number" placeholder="Enter the amount *" required/>
+				<Input className="w-full" min={0} value={!amount ? "" : amount} onChange={(e) => setAmount(parseInt(e.target.value))} type="number" placeholder="Enter the amount *" required/>
 				<Input className="w-full" value={description} onChange={(e) => setDescription(e.currentTarget.value)} type="text" placeholder="Description *" required/>
 				<Input className="w-full" value={paymentMethod} onChange={(e) => setPaymentMethod(e.currentTarget.value)} type="text" placeholder="Payment method" />
 				<Select onValueChange={setCurrency} value={currency}>
@@ -192,6 +183,6 @@ const UpdateTransaction = forwardRef<UpdaterHandle>((props, ref) => {
 			</Card>
 		</div>
 	)
-})
+}
 
 export default UpdateTransaction

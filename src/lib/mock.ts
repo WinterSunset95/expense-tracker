@@ -6,7 +6,7 @@ import { User } from "firebase/auth";
 
 export const mockTransaction = (): ITransaction => {
 	// Randomly choose between "needs", "wants" and "savings"
-	const categories = ["needs", "wants", "savings", "groceries", "rent", "entertainment", "movies", "misc"];
+	const categories = ["needs", "wants", "savings"];
 	const spendings = [-100, -100, -100, -500, -500, -500, -500, -100, -200, -300, -400, -500];
 
 	return {

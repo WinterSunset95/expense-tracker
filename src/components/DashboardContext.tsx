@@ -1,28 +1,23 @@
 import { DashboardContextType, ITransaction } from "@/lib/types";
 import { createContext, ReactNode, useContext, useRef, useState } from "react";
-import UpdateTransaction, { UpdaterHandle } from "./UpdateTransaction";
-import { Drawer } from "./Drawer";
+import { Drawer, DrawerApi, DrawerV2 } from "./Drawer";
 
 const DashboardContext = createContext<DashboardContextType | null>(null);
 
+// Decommisioned
 export const DashboardProvider = ({ children } : { children: ReactNode }) => {
 
 	const [transaction, setTransaction] = useState<ITransaction | null>(null);
 
-	const updaterRef = useRef<UpdaterHandle>({
-		setTransaction,
-		setMode: () => {},
+	const drawerApi = useRef<DrawerApi>({
 		open: () => {},
-		close: () => {}
-	});
+		close: () => {},
+		setApi: () => {},
+		setChild: () => {}
+	})
 
 	return (
-		<DashboardContext.Provider value={{ updaterRef }}>
-			{children}
-			<Drawer>
-				<UpdateTransaction ref={updaterRef} />
-			</Drawer>
-		</DashboardContext.Provider>
+		<div></div>
 	);
 }
 

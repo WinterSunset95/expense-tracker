@@ -1,3 +1,4 @@
+import { DrawerApi } from "@/components/Drawer";
 import { UpdaterHandle } from "@/components/UpdateTransaction";
 import { Auth } from "firebase/auth";
 import { Dispatch, Ref, RefObject, SetStateAction } from "react";
@@ -34,6 +35,7 @@ export interface AppContextType {
 	auth: Auth;
 	rootCategory: ICategory;
 	transactions: ITransaction[];
+	plannedTransactions: ITransaction[];
 	income: number;
 	expense: number;
 	balance: number;
@@ -41,7 +43,11 @@ export interface AppContextType {
 
 export interface DashboardContextType {
 	updaterRef: RefObject<UpdaterHandle>;
+	drawerApi: RefObject<DrawerApi>;
 }
+
+const transactionUpdateModes = ["income", "expense", "expense-update", "income-update", "planned-expense"] as const;
+export type TransactionUpdateMode = typeof transactionUpdateModes[number];
 
 export interface ICurrency {
 	symbol: string;

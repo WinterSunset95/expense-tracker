@@ -10,6 +10,7 @@ import { createContext, ReactNode, useContext, useEffect, useState } from "react
 const AppContext = createContext<AppContextType>({
 	auth: getAuth(app),
 	transactions: mockTransactionList(),
+	plannedTransactions: mockTransactionList(),
 	rootCategory: {
 		categoryId: "root",
 		name: "Root",
@@ -29,6 +30,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 		children: {}
 	});
 	const [transactions, setTransactions] = useState<ITransaction[]>(mockTransactionList());
+	const [plannedTransactions, setPlannedTransactions] = useState<ITransaction[]>(mockTransactionList());
 	const [income, setIncome] = useState(0);
 	const [expense, setExpense] = useState(0);
 	const [balance, setBalance] = useState(0);
@@ -90,6 +92,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 				setTransactions(transactions);
 			});
 
+			const plannedTransactionsRef = collection(db, "tenants", auth.tenantId as string, "users", user.uid, "plannedTransactions");
+			const ptq = query(plannedTransactionsRef, orderBy("date", "desc"));
+			onSnapshot(ptq, (snapshot) => {
+				const transactions: ITransaction[] = [];
+				snapshot.forEach((doc) => {
+					let transaction = doc.data() as ITransaction;
+					transaction.date = new Date((transaction.date as any).seconds * 1000);
+					transactions.push(transaction);
+				});
+				setPlannedTransactions(transactions);
+			})
 		})
 
 
@@ -103,6 +116,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 			auth: getAuth(app),
 			rootCategory,
 			transactions,
+			plannedTransactions,
 			income,
 			expense,
 			balance

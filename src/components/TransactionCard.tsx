@@ -7,16 +7,17 @@ import { Button } from "./ui/button";
 import { useAppContext } from "./AppContext";
 import { collection, deleteDoc, doc, getFirestore } from "firebase/firestore";
 import { app } from "@/lib/firebase";
+import { useDrawerContext } from "./Drawer";
+import UpdateTransaction from "./UpdateTransaction";
 
 export default function TransactionCard({ transaction }: { transaction: ITransaction }) {
-	const { updaterRef } = useDashboardContext();
 	const { auth, rootCategory } = useAppContext();
 	const db = getFirestore(app);
+	const { open, setChild } = useDrawerContext();
 
 	const updateItem = () => {
-		updaterRef.current.setTransaction(transaction);
-		updaterRef.current.setMode(transaction.amount > 0 ? "income-update" : "expense-update");
-		updaterRef.current.open();
+		setChild(<UpdateTransaction transaction={transaction} mode={transaction.amount > 0 ? "income-update" : "expense-update"}></UpdateTransaction>)
+		open();
 	}
 
 	const deleteItem = () => {

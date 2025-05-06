@@ -113,33 +113,47 @@ export default function PieChartComponent({ transactions }: { transactions: ITra
 		)
 	}
 
+	if (data.length === 0) {
+		return (
+			<div className="w-full h-full flex justify-center items-center flex-col gap-2">
+				<TurtleIcon size={128} />
+				<h1 className="text-2xl md:text-4xl font-bold">Wow, such empty</h1>
+			</div>
+		)
+	}
+
 	return (
 		<div className="w-full h-full flex justify-center items-center flex-col gap-2">
 			{currRoot.categoryId !== rootCategory.categoryId && <Button className="" onClick={handleReset}>Reset Chart</Button>}
-			<PieChart width={500} height={500} className="w-full h-full">
-				<Pie
-					onClick={handleClick}
-					data={data}
-					dataKey="value"
-					nameKey="name"
-					width="100%"
-					height="100%"
-					cx="50%"
-					cy="50%"
-					outerRadius="80%"
-					fill="#8884d8"
-					label={customizedLabel}
-					labelLine={false}
-				>
-					{data.map((entry, index) => {
-						const color = rootCategory.children[entry.name] ? rootCategory.children[entry.name].color ?? "#8884d8" : "#8884d8";
-						return (
-							<Cell key={`cell-${index}`} fill={color} />
-						)
-					})}
-				</Pie>
-				<Tooltip cursor={true} />
-			</PieChart>
+			<ResponsiveContainer width="100%" height="100%">
+				<PieChart width={500} height={500} className="w-full h-full">
+					<Pie
+						onClick={handleClick}
+						data={data}
+						dataKey="value"
+						nameKey="name"
+						width="100%"
+						height="100%"
+						cx="50%"
+						cy="50%"
+						outerRadius="100%"
+						fill="#8884d8"
+						label={customizedLabel}
+						labelLine={false}
+						animationBegin={0}
+						animationDuration={500}
+						animationEasing="ease-in-out"
+					>
+						{data.map((entry, index) => {
+							const color = rootCategory.children[entry.name] ? rootCategory.children[entry.name].color ?? "#8884d8" : "#8884d8";
+							return (
+								<Cell key={`cell-${index}`} stroke="" fill={color} />
+							)
+						})}
+					</Pie>
+					<Tooltip cursor={true} />
+				</PieChart>
+			</ResponsiveContainer>
 		</div>
 	)
 }

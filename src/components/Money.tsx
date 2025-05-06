@@ -2,18 +2,18 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card";
 import { useDrawerContext } from "./Drawer";
 import { useDashboardContext } from "./DashboardContext";
+import UpdateTransaction from "./UpdateTransaction";
+import { set } from "date-fns";
 
 
 export default function Money({ amount, income, currency }: { amount: number, income: 'yes' | 'no', currency?: string }) {
-
-	const { updaterRef } = useDashboardContext();
+	const { open, close, setChild } = useDrawerContext();
 
 	return (
 		<Card className="w-full h-full cursor-pointer"
 		onClick={() => {
-			updaterRef.current.setTransaction(null);
-			updaterRef.current.setMode(income === 'yes' ? 'income' : 'expense');
-			updaterRef.current.open();
+			setChild(<UpdateTransaction transaction={undefined} mode={income === 'yes' ? 'income' : 'expense'} />);
+			open();
 		}}>
 			<CardContent className="
 				w-full h-full

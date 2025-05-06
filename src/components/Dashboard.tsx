@@ -19,10 +19,9 @@ import { useDashboardContext } from "./DashboardContext";
 
 export default function Dashboard() {
 
-	const appContext = useAppContext();
+	const { transactions, plannedTransactions, balance, income, expense } = useAppContext();
 	const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 	const [current, setCurrent] = useState(0);
-	const { updaterRef } = useDashboardContext();
 
 	useEffect(() => {
 		if (!carouselApi) {
@@ -35,17 +34,6 @@ export default function Dashboard() {
 			setCurrent(carouselApi.selectedScrollSnap());
 		});
 	}, [carouselApi]);
-
-	if (!appContext) {
-		return (
-			<div>Loading . . .</div>
-		)
-	}
-
-	const transactions = appContext.transactions;
-	const balance = appContext.balance;
-	const income = appContext.income;
-	const expense = appContext.expense;
 
 	return (
 		<main className="
@@ -95,12 +83,12 @@ export default function Dashboard() {
 					</CarouselItem>
 					<CarouselItem className="overflow-auto">
 						<div className="w-full h-full flex-1 overflow-auto">
-							<Transactions transactions={transactions} />
+							<PieChartComponent transactions={transactions} />
 						</div>
 					</CarouselItem>
 					<CarouselItem className="overflow-auto">
 						<div className="w-full h-full flex-1 overflow-auto">
-							<PieChartComponent transactions={transactions} />
+							<PieChartComponent transactions={plannedTransactions} />
 						</div>
 					</CarouselItem>
 				</CarouselContent>
@@ -125,7 +113,7 @@ export default function Dashboard() {
 							<PieChartComponent transactions={transactions} />
 						</TabsContent>
 						<TabsContent value="planning" className="w-full flex-1 overflow-auto">
-							<Transactions transactions={transactions} />
+							<PieChartComponent transactions={plannedTransactions} />
 						</TabsContent>
 					</Tabs>
 				</div>
