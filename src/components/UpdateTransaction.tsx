@@ -12,6 +12,7 @@ import { useAppContext } from "./AppContext";
 import { collection, doc, getFirestore, setDoc } from "firebase/firestore";
 import { app } from "@/lib/firebase";
 import { useDrawerContext } from "./Drawer";
+import { getAllSubCategories } from "@/lib/helpers";
 
 export type UpdateTransactionProps = {
 	transaction?: ITransaction
@@ -19,12 +20,11 @@ export type UpdateTransactionProps = {
 }
 
 const UpdateTransaction: FC<UpdateTransactionProps> = ({ transaction, mode }) => {
-
 	const [amount, setAmount] = useState<number>();
 	const [description, setDescription] = useState<string>();
 	const [paymentMethod, setPaymentMethod] = useState<string>();
 	const [currency, setCurrency] = useState<string>();
-	const [category, setCategory] = useState<string>();
+	const [category, setCategory] = useState<string | undefined>(mode.includes("income") ? "income" : undefined);
 	const [date, setDate] = useState<Date>(new Date());
 	const { rootCategory } = useAppContext();
 
@@ -37,7 +37,7 @@ const UpdateTransaction: FC<UpdateTransactionProps> = ({ transaction, mode }) =>
 	const submit = () => {
 		if (auth.currentUser == null) return <div>Loading...</div>
 
-		if (!amount || !description || !currency || !category || !date) {
+		if (!amount || !description || !currency || !date) {
 			alert("Please fill all the fields!!");
 			return;
 		}
@@ -47,18 +47,26 @@ const UpdateTransaction: FC<UpdateTransactionProps> = ({ transaction, mode }) =>
 		if (!transaction || transaction.transactionId == "") {
 			// We generate a new transaction
 			const newDocRef = doc(collRef);
+			if (!mode.includes("income") && !category) {
+				alert("Please select a category");
+				return;
+			}
 			toUpload = {
 				transactionId: newDocRef.id,
 				amount: mode.includes("income") ? amount : -amount,
 				currency: currency,
 				date: date,
-				category: category,
+				category: mode.includes("income") ? "income" : category ? category : "uncategorized",
 				description: description,
 				paymentMethod: paymentMethod ?? "Not specified",
 				isRecurring: false
 			}
 		} else {
 			// We are updating the transaction
+			if (!category) {
+				alert("Please select a category");
+				return;
+			}
 			toUpload = {
 				transactionId: transaction.transactionId,
 				amount: mode.includes("income") ? amount : -amount,
@@ -142,24 +150,26 @@ const UpdateTransaction: FC<UpdateTransactionProps> = ({ transaction, mode }) =>
 					</SelectContent>
 				</Select>
 
-				<Select onValueChange={setCategory} value={mode.includes("income") ? "income" : category} disabled={mode.includes("income")}>
+				{mode.includes("income") ? null :
+				<Select onValueChange={setCategory} value={category}>
 					<SelectTrigger className="w-full">
 						<SelectValue placeholder="Select a Category" />
 					</SelectTrigger>
 					<SelectContent>
 						<SelectGroup>
 							<SelectLabel>Category</SelectLabel>
-							{Object.keys(rootCategory.children).map((category) => {
-								if (category == "income") {
+							{getAllSubCategories(rootCategory).map((category) => {
+								if (category.categoryId == "income") {
 									return
 								}
 								return (
-									<SelectItem key={category} className="w-full" value={category}>{rootCategory.children[category].name}: {category}</SelectItem>
+									<SelectItem key={category.categoryId} className="w-full" value={category.categoryId}>{category.name}: {category.categoryId}</SelectItem>
 								)
 							})}
 						</SelectGroup>
 					</SelectContent>
 				</Select>
+				}
 
 				<Popover>
 					<PopoverTrigger asChild>

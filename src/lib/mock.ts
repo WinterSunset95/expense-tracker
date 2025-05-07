@@ -55,10 +55,8 @@ export const mockTransactionList = (): ITransaction[] => {
 }
 
 export const generateFirestoreData = (user: User) => {
-	const docRef = doc(getFirestore(app), "tenants", user.tenantId as string, "users", user.uid)
-	setDoc(docRef, {
-		name: user.displayName,
-		email: user.email,
-		categories: ICategories
+	const collRef = collection(getFirestore(app), "tenants", user.tenantId as string, "users", user.uid, "categories");
+	ICategories.map((cat) => {
+		setDoc(doc(collRef, cat.categoryId), cat);
 	});
 }

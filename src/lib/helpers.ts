@@ -1,9 +1,10 @@
-import { ICategory } from "./types";
+import { ICategory, ITransaction } from "./types";
 
 export function generateColor(original: string, seed: string): string {
 	// original has to be a hex color
 	// seed can be anything
 	// Get r, g, b
+	if (!original) return "#000000";
 	const r = parseInt(original.slice(1, 3), 16);
 	const g = parseInt(original.slice(3, 5), 16);
 	const b = parseInt(original.slice(5, 7), 16);
@@ -84,11 +85,11 @@ export function getParentNode(category: ICategory, root: ICategory): ICategory {
 	if (result) {
 		return result;
 	}
+
 	return root;
 }
 
 export function getNodeFromId(id: string, root: ICategory): ICategory {
-
 	const recurse = (cat: string, curRoot: ICategory): ICategory | null => {
 
 		for (const childKey in curRoot.children) {
@@ -108,4 +109,59 @@ export function getNodeFromId(id: string, root: ICategory): ICategory {
 	}
 
 	return root;
+}
+
+/*
+* Returns an array of all subcategories of an ICategory object
+* @param root The node whose subcategories we want
+* @returns An array of ICategory objects
+*/
+export function getAllSubCategories(root: ICategory): ICategory[] {
+	const arr: ICategory[] = [];
+	for (const childKey in root.children) {
+		arr.push(root.children[childKey]);
+		if (root.children[childKey].children) {
+			const result = getAllSubCategories(root.children[childKey]);
+			arr.push(...result);
+		}
+	}
+	return arr;
+}
+
+/**
+* When a category is deleted, all transactions under it are moved to the parent
+* This function returns the new list of transactions
+* The caller is responsible for updating the transactions
+* @param transactions The list of transactions
+* @param deletedCat The category that was deleted
+* @param root The root category
+* @returns The new root category with the deleted node and a list of the updated transactions
+*/
+export function handleTransactionParentDeleted(transactions: ITransaction[], deletedCat: ICategory, root: ICategory): {
+	newRoot: ICategory,
+	newTransactions: ITransaction[]
+} {
+	// Clone the root
+	const newRoot = JSON.parse(JSON.stringify(root)) as ICategory;
+	// Get a reference to the parent of the category to be deleted
+	const parentOfDeletedCat = getParentNode(deletedCat, newRoot);
+	// Get a list of all subcategories first
+	const allSubCategories = getAllSubCategories(deletedCat);
+	// Remove the deleted category from the parent's children
+	delete parentOfDeletedCat.children[deletedCat.categoryId];
+
+	const newTransactions: ITransaction[] = [];
+	// For every transaction that matches the deleted category, or a subcategory of the deleted category, set the category to the parent of the deleted category
+	for (let i = 0; i < transactions.length; i++) {
+		if (transactions[i].category === deletedCat.categoryId || allSubCategories.find((cat) => cat.categoryId === transactions[i].category)) {
+			const updatedTransaction = JSON.parse(JSON.stringify(transactions[i])) as ITransaction;
+			updatedTransaction.category = parentOfDeletedCat.categoryId;
+			newTransactions.push(updatedTransaction);
+		}
+	}
+
+	return {
+		newRoot,
+		newTransactions
+	};
 }

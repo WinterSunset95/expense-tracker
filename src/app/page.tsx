@@ -5,6 +5,7 @@ import { DashboardProvider } from "@/components/DashboardContext";
 import { DrawerProvider } from "@/components/Drawer";
 import Onboarding from "@/components/Onboarding";
 import Planning from "@/components/Planning";
+import Profile from "@/components/Profile";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HomeIcon, House, PieChart, PieChartIcon, PiggyBankIcon, User2 } from "lucide-react";
 
@@ -20,7 +21,7 @@ export default function Home() {
 
   return (
     <Tabs defaultValue="planning" className="w-full h-full flex flex-col-reverse lg:flex-row p-2">
-		<TabsList className="w-full lg:w-1/5 lg:h-full flex flex-row lg:flex-col lg:justify-start lg:items-start lg:p-3">
+		<TabsList className="w-full lg:w-1/5 lg:h-full flex flex-row lg:flex-col lg:justify-start lg:items-start lg:p-3 h-16">
 			<div className="hidden lg:flex w-full aspect-square p-4">
 				<div className="w-full h-full rounded-full border border-black flex justify-center items-center overflow-hidden">
 					<img src="https://picsum.photos/seed/wallace/200" className="w-full h-full object-cover" />
@@ -38,7 +39,7 @@ export default function Home() {
 				<PiggyBankIcon className="w-6! h-6! md:w-8! md:h-8!"  />
 				<h1 className="hidden md:block">Savings</h1>
 			</TabsTrigger>
-			<TabsTrigger value="profile" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2" disabled>
+			<TabsTrigger value="profile" className="lg:w-full lg:grow-0 lg:justify-start md:text-lg lg:text-xl lg:p-2">
 				<User2 className="w-6! h-6! md:w-8! md:h-8!"  />
 				<h1 className="hidden md:block">Profile</h1>
 			</TabsTrigger>
@@ -61,7 +62,7 @@ export default function Home() {
 		</TabsContent>
 		<TabsContent value="profile" className="overflow-auto">
 			<DrawerProvider>
-				<Dashboard />
+				<Profile />
 			</DrawerProvider>
 		</TabsContent>
 	</Tabs>

@@ -1,5 +1,5 @@
 'use client';
-import { Circle, CircleDot, House } from "lucide-react";
+import { Circle, CircleDot, House, MessageCircleQuestionIcon, PlusIcon } from "lucide-react";
 import TotalBal from "./TotalBal";
 import Money from "./Money";
 import Transactions from "./Transactions";
@@ -12,15 +12,21 @@ import { TabsContent } from "@radix-ui/react-tabs";
 import PieChartComponent from "./PieChart";
 import { useAppContext } from "./AppContext";
 import { Button } from "./ui/button";
-import { Drawer } from "./Drawer";
+import { Drawer, useDrawerContext } from "./Drawer";
 import UpdateTransaction from "./UpdateTransaction";
 import { ITransaction } from "@/lib/types";
 
 export default function Dashboard() {
-
 	const { transactions, plannedTransactions, balance, income, expense } = useAppContext();
 	const [carouselApi, setCarouselApi] = useState<CarouselApi | null>(null);
 	const [current, setCurrent] = useState(0);
+
+	const { open, setChild } = useDrawerContext();
+
+	const plusClicked = () => {
+		setChild(<UpdateTransaction transaction={undefined} mode="expense" />);
+		open();
+	}
 
 	useEffect(() => {
 		if (!carouselApi) {
@@ -76,17 +82,32 @@ export default function Dashboard() {
 
 				<CarouselContent className="h-full">
 					<CarouselItem className="overflow-auto">
-						<div className="w-full h-full flex-1 overflow-auto">
-							<Transactions transactions={transactions} />
+						<div className="w-full h-full flex-1 flex flex-col overflow-auto gap-2">
+							<div className="flex flex-row items-center gap-2 py-4">
+								<h1 className="grow text-lg font-bold">Transaction History</h1>
+								<Button onClick={plusClicked}><PlusIcon /></Button>
+								<Button><MessageCircleQuestionIcon /></Button>
+							</div>
+							<div className="w-full grow flex-1 overflow-auto">
+								<Transactions transactions={transactions} />
+							</div>
 						</div>
 					</CarouselItem>
-					<CarouselItem className="overflow-auto">
-						<div className="w-full h-full flex-1 overflow-auto">
+					<CarouselItem className="flex flex-col overflow-auto">
+						<div className="w-full flex flex-row gap-2 py-4 items-center">
+							<h1 className="grow text-lg font-bold">Spending Chart</h1>
+							<Button><MessageCircleQuestionIcon /></Button>
+						</div>
+						<div className="w-full flex-1 overflow-auto">
 							<PieChartComponent transactions={transactions} />
 						</div>
 					</CarouselItem>
-					<CarouselItem className="overflow-auto">
-						<div className="w-full h-full flex-1 overflow-auto">
+					<CarouselItem className="flex flex-col overflow-auto">
+						<div className="w-full flex flex-row gap-2 py-4 items-center">
+							<h1 className="grow text-lg font-bold">Planned Transactions</h1>
+							<Button><MessageCircleQuestionIcon /></Button>
+						</div>
+						<div className="w-full flex-1 overflow-auto">
 							<PieChartComponent transactions={plannedTransactions} />
 						</div>
 					</CarouselItem>

@@ -2,20 +2,19 @@ import { ICategory } from "@/lib/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import UpdateTransaction from "./UpdateTransaction";
 import { Card, CardTitle } from "./ui/card";
+import CategoryAdder from "./CategoryAdder";
 
 export default function PlanAdder({ category }: { category: ICategory }) {
-
 	return (
 		<Tabs defaultValue="category">
+
 			<TabsList>
 				<TabsTrigger value="category">Add Category</TabsTrigger>
 				<TabsTrigger value="transaction">Planned Transaction</TabsTrigger>
 			</TabsList>
 
 			<TabsContent value="category">
-				<Card>
-					<CardTitle>Hello there</CardTitle>
-				</Card>
+				<CategoryAdder cat={category} />
 			</TabsContent>
 
 			<TabsContent value="transaction">

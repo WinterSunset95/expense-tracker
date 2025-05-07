@@ -1,6 +1,6 @@
 import { Cell, Pie, PieChart, PieLabel, ResponsiveContainer, Tooltip } from "recharts";
 import { useAppContext } from "./AppContext";
-import { ICategory, ITransaction } from "@/lib/types";
+import { ICategory, IPieData, ITransaction } from "@/lib/types";
 import { JSXElementConstructor, ReactElement, ReactNode, useEffect, useState } from "react";
 import { TurtleIcon } from "lucide-react";
 import { CategoricalChartState } from "recharts/types/chart/types";
@@ -8,10 +8,9 @@ import { Button } from "./ui/button";
 import { generateColor } from "@/lib/helpers";
 
 export default function PieChart2({ rootCategory, handleClick, handleBack }: { rootCategory: ICategory, handleClick: (e: any) => void, handleBack: (cat: ICategory) => void }) {
-
 	const { balance, income, expense, transactions, plannedTransactions } = useAppContext();
 	
-	const [data, setData] = useState<{ name: string, value: number, color: string }[]>([]);
+	const [data, setData] = useState<IPieData[]>([]);
 
 	const getAggregateOfCategory = (category: ICategory): number => {
 		let aggregate = 0;
@@ -36,10 +35,11 @@ export default function PieChart2({ rootCategory, handleClick, handleBack }: { r
 	}
 
 	useEffect(() => {
-		let thisData: { name: string, value: number, color: string }[] = [];
+		let thisData: IPieData[] = [];
 
 		if (!rootCategory) {
 			setData([{
+				id: "unknown",
 				name: "unknown",
 				value: 100,
 				color: "#8884d8"
@@ -47,33 +47,45 @@ export default function PieChart2({ rootCategory, handleClick, handleBack }: { r
 			return;
 		}
 
+		let total = 0;
+
 		for (const child in rootCategory.children) {
 			const thisChild = rootCategory.children[child];
+			if (thisChild.categoryId == "income") continue;
 			thisData.push({
+				id: thisChild.categoryId,
 				name: child,
-				value: thisChild.maxSpend ? thisChild.maxSpend : getAggregateOfCategory(thisChild),
-				color: thisChild.color as string
+				value: thisChild.maxSpend,
+				color: thisChild.color
 			});
+			total += thisChild.maxSpend;
 		}
 
 		for (let i=0; i<plannedTransactions.length; i++) {
 			if (plannedTransactions[i].category === rootCategory.categoryId) {
 				const newCol = generateColor(rootCategory.color as string, plannedTransactions[i].transactionId);
-				console.log(rootCategory.color);
-				console.log(newCol);
 				thisData.push({
+					id: plannedTransactions[i].description,
 					name: plannedTransactions[i].description,
 					value: plannedTransactions[i].amount > 0 ? 0 : -(plannedTransactions[i].amount),
 					color: newCol,
 				});
+				total += plannedTransactions[i].amount > 0 ? 0 : -(plannedTransactions[i].amount);
 			}
 		}
-		setData(thisData);
 
+		thisData.push({
+			id: "Buffer",
+			name: "buffer",
+			value: rootCategory.maxSpend - total,
+			color: "#8884d8"
+		});
+
+		setData(thisData);
 	}, [rootCategory]);
 
 	return (
-		<div className="w-full flex-1 relative text-primary-foreground">
+		<div className="w-full h-full relative text-primary-foreground">
 			<div className="
 				absolute
 				top-1/2
@@ -92,9 +104,9 @@ export default function PieChart2({ rootCategory, handleClick, handleBack }: { r
 				<h1 className="
 					text-4xl
 					font-bold
-				">{rootCategory.maxSpend ? (rootCategory.maxSpend/100)*income : income}</h1>
+				">{rootCategory.maxSpend}</h1>
 			</div>
-			<ResponsiveContainer className="w-full h-full">
+			<ResponsiveContainer width={"100%"} height={"100%"}>
 				<PieChart width={500} height={500} className="w-full h-full">
 					<Pie
 						onClick={handleClick}
@@ -115,7 +127,7 @@ export default function PieChart2({ rootCategory, handleClick, handleBack }: { r
 					>
 						{data.map((entry, index) => {
 							return (
-								<Cell key={`cell-${index}`} fill={entry.color} stroke="" />
+								<Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" />
 							)
 						})}
 					</Pie>
@@ -135,7 +147,6 @@ export default function PieChart2({ rootCategory, handleClick, handleBack }: { r
 					>
 						<Cell stroke="" fill="#a0a0a0" />
 					</Pie>
-					<Tooltip cursor={true} />
 				</PieChart>
 			</ResponsiveContainer>
 		</div>

@@ -1,5 +1,10 @@
 import React, { forwardRef, RefObject, ReactNode, useState, useImperativeHandle, useRef, createContext, useContext } from "react";
 
+export const drawerScreenModes = ["full", "partial"] as const;
+export const drawerDirections = ["left", "right", "top", "bottom"] as const;
+export type DrawerScreenMode = typeof drawerScreenModes[number];
+export type DrawerDirection = typeof drawerDirections[number];
+
 export type DrawerContextType = {
 	open: () => void;
 	close: () => void;
@@ -7,6 +12,8 @@ export type DrawerContextType = {
 	state: boolean;
 	child: ReactNode;
 	setChild: (child: ReactNode) => void;
+	setDrawerScreenMode: (mode: DrawerScreenMode) => void;
+	setDrawerDirection: (direction: DrawerDirection) => void;
 };
 
 const DrawerContext = createContext<DrawerContextType>({
@@ -15,7 +22,9 @@ const DrawerContext = createContext<DrawerContextType>({
 	toggle: () => {},
 	state: false,
 	child: null,
-	setChild: (child: ReactNode) => {}
+	setChild: (child: ReactNode) => {},
+	setDrawerScreenMode: (mode: DrawerScreenMode) => {},
+	setDrawerDirection: (direction: DrawerDirection) => {},
 });
 
 export interface DrawerApi {
@@ -88,7 +97,6 @@ export const DrawerV2 = forwardRef<DrawerApi, { children?: ReactNode }>(({ child
 });
 
 export const Drawer: React.FC<{ children: ReactNode }> = ({ children }) => {
-
 	const { toggle, state: open } = useDrawerContext();
 
 	return (
@@ -137,6 +145,8 @@ export const Drawer: React.FC<{ children: ReactNode }> = ({ children }) => {
 export const DrawerProvider = ({ children } : { children: ReactNode }) => {
 	const [shown, setShown] = useState(false);
 	const [child, setChild] = useState<ReactNode>(null);
+	const [screenMode, setScreenMode] = useState<DrawerScreenMode>("full");
+	const [direction, setDirection] = useState<DrawerDirection>("bottom");
 
 	const open = () => {
 		setShown(true);
@@ -155,8 +165,11 @@ export const DrawerProvider = ({ children } : { children: ReactNode }) => {
 		setChild(child);
 	}
 
+	const handleClick = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+	}
+
 	return (
-		<DrawerContext.Provider value={{ open, close, toggle, state: shown, child, setChild: setThisChild }}>
+		<DrawerContext.Provider value={{ open, close, toggle, state: shown, child, setChild: setThisChild, setDrawerScreenMode: setScreenMode, setDrawerDirection: setDirection }}>
 			{children}
 			<div className={`
 				fixed
@@ -183,6 +196,7 @@ export const DrawerProvider = ({ children } : { children: ReactNode }) => {
 					<div className="w-full h-full grow" onClick={() => toggle()}></div>
 					<div className={`
 						w-full
+						${screenMode === "full" ? "h-full" : "h-auto"}
 						bg-primary-foreground
 						p-2
 						flex
@@ -192,7 +206,7 @@ export const DrawerProvider = ({ children } : { children: ReactNode }) => {
 						transition
 						duration-500
 						${shown ? "translate-y-0" : "translate-y-full"}
-					`}>
+					`} onClick={(e) => handleClick(e)}>
 						{child ? child : <div>No child set</div>}
 					</div>
 				</div>

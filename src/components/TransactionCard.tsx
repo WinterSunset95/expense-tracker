@@ -8,6 +8,7 @@ import { collection, deleteDoc, doc, getFirestore } from "firebase/firestore";
 import { app } from "@/lib/firebase";
 import { useDrawerContext } from "./Drawer";
 import UpdateTransaction from "./UpdateTransaction";
+import { getNodeFromId } from "@/lib/helpers";
 
 export default function TransactionCard({ transaction }: { transaction: ITransaction }) {
 	const { auth, rootCategory } = useAppContext();
@@ -49,7 +50,7 @@ export default function TransactionCard({ transaction }: { transaction: ITransac
 				</CollapsibleTrigger>
 				<CollapsibleContent className="mt-2">
 					<div className="w-full h-full flex flex-col">
-						<h1 className="">Category: {rootCategory.children[transaction.category]?.name}</h1>
+						<h1 className="">Category: {getNodeFromId(transaction.category, rootCategory).name}</h1>
 						<h2>Paid through: {transaction.paymentMethod}</h2>
 						<div className="w-full flex flex-row justify-end gap-2">
 							<Button onClick={() => updateItem()}>Edit</Button>

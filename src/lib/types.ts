@@ -25,15 +25,33 @@ export interface ICategory {
 	categoryId: string;
 	name: string;
 	icon: string;
-	color?: string;
-	maxSpend?: number;
+	color: string;
+	maxSpend: number;
+	parentId: string;
 	children: Record<string, ICategory>;
+}
+
+export interface ICategoryFlat {
+	categoryId: string;
+	name: string;
+	icon: string;
+	color: string;
+	maxSpend: number;
+	parentId: string;
+}
+
+export interface IPieData {
+	id: string;
+	name: string;
+	value: number;
+	color: string;
 }
 
 export interface AppContextType {
 	auth: Auth;
-	rootCategory: ICategory;
 	transactions: ITransaction[];
+	categories: ICategoryFlat[];
+	rootCategory: ICategory;
 	plannedTransactions: ITransaction[];
 	income: number;
 	expense: number;
@@ -121,36 +139,32 @@ export const ICurrencies: Record<string, ICurrency> = {
 };
 
 // Default values
-export const ICategories: Record<string, ICategory> = {
-	"needs": {
+export const ICategories: ICategory[] = [
+	{
 		categoryId: "needs",
 		name: "Needs",
 		icon: "https://picsum.photos/seed/needs/200",
 		color: "#0010FF",
 		maxSpend: 50,
+		parentId: "root",
 		children: {},
 	},
-	"wants": {
+	{
 		categoryId: "wants",
 		name: "Wants",
 		color: "#FF0100",
 		maxSpend: 30,
 		icon: "https://picsum.photos/seed/wants/200",
+		parentId: "root",
 		children: {},
 	},
-	"savings": {
+	{
 		categoryId: "savings",
 		name: "Savings",
 		icon: "https://picsum.photos/seed/savings/200",
 		color: "#01FF00",
 		maxSpend: 20,
+		parentId: "root",
 		children: {},
 	},
-	"income": {
-		categoryId: "income",
-		name: "Income",
-		color: "#00FF00",
-		icon: "https://picsum.photos/seed/income/200",
-		children: {},
-	},
-}
+]

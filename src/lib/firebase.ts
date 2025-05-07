@@ -25,8 +25,8 @@ export const app = initializeApp(firebaseConfig);
 getAuth(app).tenantId = "expense-tracker";
 const storage = getStorage(app);
 if (process.env.NODE_ENV === "development") {
-        connectAuthEmulator(getAuth(app), "http://localhost:9099");
-        connectFirestoreEmulator(getFirestore(app), "localhost", 8080);
+        connectAuthEmulator(getAuth(app), "http://192.168.220.210:9099");
+        connectFirestoreEmulator(getFirestore(app), "192.168.220.210", 8080);
         //const functions = getFunctions(getApp());
         //connectFunctionsEmulator(functions, "localhost", 5001);
         //connectStorageEmulator(storage, "localhost", 9199);

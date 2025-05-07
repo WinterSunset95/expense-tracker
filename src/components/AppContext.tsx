@@ -1,32 +1,41 @@
 'use client'
 import { app } from "@/lib/firebase";
 import { generateFirestoreData, mockTransactionList } from "@/lib/mock";
-import { AppContextType, ICategory, ITransaction } from "@/lib/types";
+import { AppContextType, ICategory, ICategoryFlat, ITransaction } from "@/lib/types";
 import { Auth, getAuth, onAuthStateChanged, User } from "firebase/auth";
-import { collection, doc, getDocs, getFirestore, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { collection, doc, getDocs, getFirestore, onSnapshot, orderBy, query, setDoc, where } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { createContext, ReactNode, useContext, useEffect, useState } from "react";
 
 const AppContext = createContext<AppContextType>({
 	auth: getAuth(app),
 	transactions: mockTransactionList(),
-	plannedTransactions: mockTransactionList(),
+	categories: [],
 	rootCategory: {
 		categoryId: "root",
 		name: "Root",
 		icon: "https://picsum.photos/seed/root/200",
+		color: "#8884d8",
+		maxSpend: 0,
+		parentId: "root",
 		children: {}
 	},
+	plannedTransactions: mockTransactionList(),
 	income: 0,
 	expense: 0,
 	balance: 0
 });
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
+
+	const [categories, setCategories] = useState<ICategoryFlat[]>([]);
 	const [rootCategory, setRootCategory] = useState<ICategory>({
 		categoryId: "root",
 		name: "Root",
 		icon: "https://picsum.photos/seed/root/200",
+		color: "#8884d8",
+		maxSpend: 0,
+		parentId: "root",
 		children: {}
 	});
 	const [transactions, setTransactions] = useState<ITransaction[]>(mockTransactionList());
@@ -35,6 +44,38 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 	const [expense, setExpense] = useState(0);
 	const [balance, setBalance] = useState(0);
 	const { auth } = useContext(AppContext);
+
+	const reconstructTree = (catArr: ICategoryFlat[]): Record<string, ICategory> => {
+		const categoryMap: Record<string, ICategory> = {};
+		const rootChildren: Record<string, ICategory> = {};
+
+		// Pass 1
+		for (const fc of catArr) {
+			categoryMap[fc.categoryId] = {
+				categoryId: fc.categoryId,
+				name: fc.name,
+				icon: fc.icon,
+				color: fc.color,
+				maxSpend: fc.maxSpend,
+				parentId: fc.parentId,
+				children: {}
+			}
+		}
+
+		// Pass 2
+		for (const fc of catArr) {
+			if (fc.parentId == "root") {
+				rootChildren[fc.categoryId] = categoryMap[fc.categoryId];
+			} else {
+				const parentNode = categoryMap[fc.parentId]
+				if (parentNode) {
+					parentNode.children[fc.categoryId] = categoryMap[fc.categoryId];
+				}
+			}
+		}
+
+		return rootChildren;
+	}
 
 	useEffect(() => {
 		let balance = 0;
@@ -54,7 +95,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 		setIncome(income);
 		setExpense(expense);
 		setBalance(balance);
-	}, [transactions]);
+
+		const rootCat: ICategory = {
+			categoryId: "root",
+			name: "Root",
+			icon: "https://picsum.photos/seed/root/200",
+			color: "#8884d8",
+			maxSpend: income,
+			parentId: "root",
+			children: {}
+		}
+		const rootChildren = reconstructTree(categories);
+		rootCat.children = rootChildren;
+		setRootCategory(rootCat);
+	}, [transactions, categories]);
 
 	useEffect(() => {
 		const db = getFirestore(app);
@@ -65,20 +119,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 				return;
 			}
 
-			const userRef = doc(db, "tenants", user.tenantId as string, "users", user.uid);
-			console.log("generated listener");
-			onSnapshot(userRef, (snapshot) => {
-				const categories = snapshot.get("categories") as Record<string, ICategory>;
-				if (!categories) {
-					generateFirestoreData(user);
+			let income = 0;
+			for (let i = 0; i < transactions.length; i++) {
+				const transaction = transactions[i];
+				if (transaction.amount > 0) {
+					income += transaction.amount;
 				}
-				setRootCategory({
-					categoryId: "root",
-					name: "Root",
-					icon: "https://picsum.photos/seed/root/200",
-					children: categories
+			}
+
+			const categoriesRef = collection(db, "tenants", auth.tenantId as string, "users", user.uid, "categories");
+			const catq = query(categoriesRef);
+			onSnapshot(catq, (snapshot) => {
+				const categories: ICategory[] = [];
+				if (snapshot.empty) {
+					generateFirestoreData(user);
+					return;
+				}
+				snapshot.forEach((doc) => {
+					let category = doc.data() as ICategory;
+					categories.push(category);
 				});
-			})
+				setCategories(categories);
+			});
 
 			const userTransactionsRef = collection(db, "tenants", auth.tenantId as string, "users", user.uid, "transactions");
 			const tq = query(userTransactionsRef, orderBy("date", "desc"));
@@ -114,6 +176,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 	return (
 		<AppContext.Provider value={{
 			auth: getAuth(app),
+			categories,
 			rootCategory,
 			transactions,
 			plannedTransactions,
