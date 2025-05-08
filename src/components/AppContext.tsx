@@ -132,7 +132,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 			onSnapshot(catq, (snapshot) => {
 				const categories: ICategory[] = [];
 				if (snapshot.empty) {
-					generateFirestoreData(user);
 					return;
 				}
 				snapshot.forEach((doc) => {

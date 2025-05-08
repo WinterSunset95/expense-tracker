@@ -36,7 +36,7 @@ export default function Planning() {
 	}
 
 	const handleEdit = () => {
-		setChild(<CategoryUpdater category={currRoot} />);
+		setChild(<CategoryUpdater catId={currRoot.categoryId} />);
 		open();
 	}
 
@@ -57,6 +57,10 @@ export default function Planning() {
 		setCategories(catArray);
 		setTransactions(transArray);
 	}, [currRoot]);
+
+	useEffect(() => {
+		setCurrRoot(rootCategory);
+	}, [rootCategory]);
 
 	return (
 		<div className="w-full h-full grid grid-cols-12 grid-rows-12 gap-4 overflow-auto">
@@ -149,7 +153,7 @@ export default function Planning() {
 				flex flex-col
 			">
 				<h1 className="text-2xl font-bold">Planned Transactions</h1>
-				<Transactions transactions={plannedTransactions} />
+				<Transactions transactions={plannedTransactions} planned="yes" />
 			</div>
 		</div>
 	)

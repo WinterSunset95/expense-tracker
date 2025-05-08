@@ -91,14 +91,12 @@ export function getParentNode(category: ICategory, root: ICategory): ICategory {
 
 export function getNodeFromId(id: string, root: ICategory): ICategory {
 	const recurse = (cat: string, curRoot: ICategory): ICategory | null => {
-
 		for (const childKey in curRoot.children) {
 			if (childKey == cat) return curRoot.children[childKey];
 
 			const found = recurse(cat, curRoot.children[childKey]);
 			if (found) return found;
 		}
-
 		return null
 	}
 

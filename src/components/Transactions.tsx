@@ -2,9 +2,9 @@ import { ITransaction } from "@/lib/types";
 import TransactionCard from "./TransactionCard";
 
 export default function Transactions({
-	transactions
+	transactions, planned
 }: {
-	transactions: ITransaction[]
+	transactions: ITransaction[], planned?: "yes" | "no"
 }) {
 
 	if (transactions.length === 0) {
@@ -18,7 +18,7 @@ export default function Transactions({
 	return (
 		<div className="w-full h-full flex flex-col gap-2 overflow-auto">
 			{transactions.map((transaction, index) => (
-				<TransactionCard key={index} transaction={transaction} />
+				<TransactionCard key={index} transaction={transaction} planned={planned} />
 			))}
 		</div>
 	);

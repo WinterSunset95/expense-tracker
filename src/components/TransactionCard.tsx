@@ -10,7 +10,7 @@ import { useDrawerContext } from "./Drawer";
 import UpdateTransaction from "./UpdateTransaction";
 import { getNodeFromId } from "@/lib/helpers";
 
-export default function TransactionCard({ transaction }: { transaction: ITransaction }) {
+export default function TransactionCard({ transaction, planned }: { transaction: ITransaction, planned?: "yes" | "no" }) {
 	const { auth, rootCategory } = useAppContext();
 	const db = getFirestore(app);
 	const { open, setChild } = useDrawerContext();
@@ -22,7 +22,8 @@ export default function TransactionCard({ transaction }: { transaction: ITransac
 
 	const deleteItem = () => {
 		if (auth.currentUser == null) return;
-		const collRef = collection(db, "tenants", auth.tenantId as string, "users", auth.currentUser.uid, "transactions");
+		const subColl = planned === "yes" ? "plannedTransactions" : "transactions";
+		const collRef = collection(db, "tenants", auth.tenantId as string, "users", auth.currentUser.uid, subColl);
 		const docRef = doc(collRef, transaction.transactionId);
 		deleteDoc(docRef)
 		.then(() => {
